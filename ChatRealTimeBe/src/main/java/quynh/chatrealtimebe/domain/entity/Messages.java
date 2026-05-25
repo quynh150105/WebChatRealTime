@@ -54,6 +54,11 @@ public class Messages {
         this.updatedAt = LocalDateTime.now();
     }
 
+    @PreRemove
+    public void onDelete(){
+        this.edited = LocalDateTime.now();
+    }
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name="sender_id", nullable = false)
     private User sender;
