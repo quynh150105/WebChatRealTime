@@ -35,11 +35,13 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(
                         auth-> auth
+                                .requestMatchers("/ws/**").permitAll()
                                 .requestMatchers("/auth/**").permitAll()
                                 .requestMatchers("/admin/**").hasRole("ADMIN")
                                 .requestMatchers("/users/**").hasAnyRole("ADMIN","USER")
                                 .requestMatchers("/conversations/**").hasAnyRole("ADMIN","USER")
                                 .requestMatchers("/messages/**").hasAnyRole("ADMIN","USER")
+                                .requestMatchers("/group/**").hasAnyRole("ADMIN","USER")
                                 .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())

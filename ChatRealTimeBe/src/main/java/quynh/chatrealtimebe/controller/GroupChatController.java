@@ -1,0 +1,85 @@
+package quynh.chatrealtimebe.controller;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+import quynh.chatrealtimebe.domain.dto.ApiResponse;
+import quynh.chatrealtimebe.domain.dto.request.AddMemberRequest;
+import quynh.chatrealtimebe.domain.dto.request.UpdateConversationRequest;
+import quynh.chatrealtimebe.domain.dto.response.ConversationResponse;
+import quynh.chatrealtimebe.service.GroupChatService;
+
+@RestController
+@RequestMapping("/group")
+@RequiredArgsConstructor
+public class GroupChatController {
+    private final GroupChatService groupChatService;
+
+    @PostMapping("/{id}/members")
+    public ResponseEntity<ApiResponse<?>> addMembers(
+            Authentication authentication,
+            @PathVariable("id") Long id,
+            @Valid @RequestBody AddMemberRequest addMemberRequest
+    ){
+        String email = authentication.getName();
+        return ResponseEntity.ok(
+            ApiResponse.<ConversationResponse>builder()
+                    .status(HttpStatus.OK.value())
+                    .message("Add members successful")
+                    .data(groupChatService.addMembers(email,id,addMemberRequest))
+                    .build()
+        );
+    }
+
+    @PostMapping("/{id}/leave")
+    public ResponseEntity<ApiResponse<?>> leaveGroup(
+        @PathVariable("id") Long id,
+        Authentication authentication
+    ){
+        String email = authentication.getName();
+        return ResponseEntity.ok(
+                ApiResponse.<ConversationResponse>builder()
+                        .status(HttpStatus.OK.value())
+                        .message("leave group successful")
+                        .data(groupChatService.leaveGroup(email,id))
+                        .build()
+        );
+    }
+
+
+
+    @PutMapping("/edit/{id}")
+    public ResponseEntity<ApiResponse<?>> updateGroup(Authentication authentication,
+                                                      @PathVariable("id") Long id,
+                                                      @RequestBody UpdateConversationRequest updateConversationRequest
+    ){
+        String email = authentication.getName();
+        return ResponseEntity.ok(
+          ApiResponse.<ConversationResponse>builder()
+                  .status(HttpStatus.OK.value())
+                  .message("update group successful")
+                  .data(groupChatService.updateGroup(email,id,updateConversationRequest))
+                  .build()
+        );
+    }
+
+    @DeleteMapping("/{id}/members/{userId}")
+    public ResponseEntity<ApiResponse<?>> removeMember(
+        Authentication authentication,
+        @PathVariable("id") Long id,
+        @PathVariable("userId") Long userId
+    ){
+        String email = authentication.getName();
+        return ResponseEntity.ok(
+          ApiResponse.<ConversationResponse>builder()
+                  .status(HttpStatus.OK.value())
+                  .message("Remove member successful")
+                  .data(groupChatService.removeMembers(email,id,userId))
+                  .build()
+        );
+    }
+
+}

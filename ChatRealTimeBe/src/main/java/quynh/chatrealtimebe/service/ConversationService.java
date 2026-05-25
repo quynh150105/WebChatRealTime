@@ -9,4 +9,5 @@ public interface ConversationService {
     ConversationResponse create(String email, CreateConversationRequest request);
     List<ConversationResponse> getMyConversations(String email);
     ConversationResponse getDetail(String email, Long conversationId);
+    ConversationResponse createDirectConversation(String email, Long targetUserId);
 }

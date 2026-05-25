@@ -16,6 +16,8 @@ import quynh.chatrealtimebe.repository.ConversationRepository;
 import quynh.chatrealtimebe.repository.MessageRepository;
 import quynh.chatrealtimebe.repository.UserRepository;
 import quynh.chatrealtimebe.service.MessageService;
+
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -66,6 +68,8 @@ public class MessageServiceImpl implements MessageService {
                 .build();
 
         messageRepository.save(message);
+        conversation.setUpdatedAt(LocalDateTime.now());
+        conversationRepository.save(conversation);
 
         return messageMapper.toMessageResponse(message);
     }
@@ -111,6 +115,7 @@ public class MessageServiceImpl implements MessageService {
         }
 
         message.setContent(request.getContent());
+        message.setEdited(LocalDateTime.now());
 
         return messageMapper.toMessageResponse(message);
     }

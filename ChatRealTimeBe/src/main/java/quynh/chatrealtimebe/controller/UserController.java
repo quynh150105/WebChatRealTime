@@ -9,6 +9,7 @@ import quynh.chatrealtimebe.domain.dto.ApiResponse;
 import quynh.chatrealtimebe.domain.dto.request.UpdateUserRequest;
 import quynh.chatrealtimebe.domain.dto.response.UserResponse;
 import quynh.chatrealtimebe.service.UserService;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -35,6 +36,17 @@ public class UserController {
                         .message("Update current user")
                         .data(userService.updateMe(authentication.getName(), request))
                         .build()
+        );
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse<?>> searchUser(@RequestParam String keywords){
+        return ResponseEntity.ok(
+            ApiResponse.<List<UserResponse>>builder()
+                    .status(HttpStatus.OK.value())
+                    .message("Search user successful")
+                    .data(userService.searchUsers(keywords))
+                    .build()
         );
     }
 

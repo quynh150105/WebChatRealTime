@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import quynh.chatrealtimebe.constant.RoleConversation;
+import quynh.chatrealtimebe.constant.TypeConversation;
 import quynh.chatrealtimebe.domain.dto.request.CreateConversationRequest;
 import quynh.chatrealtimebe.domain.dto.response.ConversationResponse;
 import quynh.chatrealtimebe.domain.entity.Conversation;
@@ -111,5 +112,52 @@ public class ConversationServiceImpl implements ConversationService {
 
 
         return conversationMapper.toConversationResponse(conversation);
+    }
+
+    @Override
+    public ConversationResponse createDirectConversation(String email, Long targetUserId) {
+        User currentUser = userRepository.findByEmail(email)
+                .orElseThrow(()-> new RuntimeException("User not found"));
+
+        User targetUser = userRepository.findById(targetUserId)
+                .orElseThrow(()-> new RuntimeException("Target User not found"));
+
+        if(currentUser.getId().equals(targetUser.getId())){
+            throw new RuntimeException("Can not create DIRECT conversation with yourself");
+        }
+
+        return conversationRepository
+                .findDirectConversation(currentUser.getId(), targetUserId)
+                .map(conversationMapper::toConversationResponse)
+                .orElseGet(()->{
+                    Conversation conversation = Conversation.builder()
+                            .types(TypeConversation.DIRECT)
+                            .createdBy(currentUser)
+                            .build();
+
+                    conversation = conversationRepository.save(conversation);
+
+                    conversationMemberRepository.save(
+                            ConversationMember.builder()
+                                    .conversation(conversation)
+                                    .user(currentUser)
+                                    .role(RoleConversation.OWNER)
+                                    .build()
+                    );
+
+                    conversationMemberRepository.save(
+                            ConversationMember.builder()
+                                    .conversation(conversation)
+                                    .user(targetUser)
+                                    .role(RoleConversation.MEMBER)
+                                    .build()
+                    );
+
+                    Conversation savedConversation = conversationRepository
+                            .findWithMembersById(conversation.getId())
+                            .orElseThrow(()-> new RuntimeException("Conversation not found"));
+
+                    return conversationMapper.toConversationResponse(savedConversation);
+                });
     }
 }

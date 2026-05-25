@@ -10,6 +10,8 @@ import quynh.chatrealtimebe.domain.mapper.UserMapper;
 import quynh.chatrealtimebe.repository.UserRepository;
 import quynh.chatrealtimebe.service.UserService;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -36,5 +38,12 @@ public class UserServiceImpl implements UserService {
         user.setFullName(request.getFullName());
 
         return userMapper.toUserResponse(user);
+    }
+
+    @Override
+    public List<UserResponse> searchUsers(String keywords) {
+       List<User> list = userRepository.findByEmailContainingIgnoreCaseOrFullNameContainingIgnoreCase(keywords, keywords);
+       List<UserResponse> listResponse = userMapper.toListUserResponse(list);
+        return listResponse;
     }
 }

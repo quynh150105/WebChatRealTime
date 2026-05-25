@@ -35,6 +35,19 @@ public class ConversationController {
         );
     }
 
+    // target theo user 1-1
+    @PostMapping("/direct/{userId}")
+    public ResponseEntity<ApiResponse<?>> createDirectConversation(Authentication authentication,
+                                                             @PathVariable Long userId){
+        return ResponseEntity.ok(
+                ApiResponse.<ConversationResponse>builder()
+                        .status(HttpStatus.CREATED.value())
+                        .message("Create direct conversation successful")
+                        .data(conversationService.createDirectConversation(authentication.getName(),userId))
+                        .build()
+        );
+    }
+
     @GetMapping()
     public ResponseEntity<ApiResponse<?>> getMyConversation(Authentication authentication){
         String email = authentication.getName();
