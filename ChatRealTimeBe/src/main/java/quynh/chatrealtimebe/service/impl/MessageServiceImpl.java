@@ -1,12 +1,15 @@
 package quynh.chatrealtimebe.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import quynh.chatrealtimebe.constant.TypeMessage;
 import quynh.chatrealtimebe.domain.dto.request.SendMessageRequest;
 import quynh.chatrealtimebe.domain.dto.request.UpdateMessageRequest;
 import quynh.chatrealtimebe.domain.dto.response.MessageResponse;
+import quynh.chatrealtimebe.domain.dto.response.PageResponse;
 import quynh.chatrealtimebe.domain.entity.Conversation;
 import quynh.chatrealtimebe.domain.entity.Messages;
 import quynh.chatrealtimebe.domain.entity.User;
@@ -75,21 +78,26 @@ public class MessageServiceImpl implements MessageService {
     }
 
     @Override
-    public List<MessageResponse> getMessages(String email, Long conversationId) {
+    public PageResponse<MessageResponse> getMessages(String email, Long conversationId, Pageable pageable) {
         boolean isMember = conversationMemberRepository
                 .existsByConversationIdAndUserEmailAndLeftAtIsNull(conversationId, email);
         if (!isMember) {
             throw new RuntimeException("You are not a member of this conversation");
         }
 
-        return messageRepository
-                .findByConversationIdAndIsDeletedFalseOrderByCreatedAtAsc(conversationId)
-                .stream()
-                .map(messages -> {
-                            return messageMapper.toMessageResponse(messages);
-                        }
-                )
-                .toList();
+        Page<MessageResponse> page = messageRepository
+                .findByConversationIdAndIsDeletedFalseOrderByCreatedAtDesc(conversationId, pageable)
+                .map(messageMapper::toMessageResponse);
+
+        PageResponse<MessageResponse> response = PageResponse.<MessageResponse>builder()
+                .page(pageable.getPageNumber())
+                .size(page.getSize())
+                .content(page.getContent())
+                .totalPages(page.getTotalPages())
+                .totalElements(page.getTotalElements())
+                .build();
+
+        return response;
     }
 
     @Override

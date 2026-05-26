@@ -2,6 +2,9 @@ package quynh.chatrealtimebe.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -10,6 +13,7 @@ import quynh.chatrealtimebe.domain.dto.ApiResponse;
 import quynh.chatrealtimebe.domain.dto.request.SendMessageRequest;
 import quynh.chatrealtimebe.domain.dto.request.UpdateMessageRequest;
 import quynh.chatrealtimebe.domain.dto.response.MessageResponse;
+import quynh.chatrealtimebe.domain.dto.response.PageResponse;
 import quynh.chatrealtimebe.service.MessageService;
 
 import java.util.List;
@@ -33,13 +37,18 @@ public class MessageController {
     }
 
     @GetMapping("/conversation/{conversationId}")
-    public ResponseEntity<ApiResponse<?>> getMessage(Authentication authentication,
-                                                     @PathVariable("conversationId") Long conversationId){
+    public ResponseEntity<ApiResponse<?>> getMessage(
+            Authentication authentication,
+            @PathVariable("conversationId") Long conversationId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ){
+        Pageable  pageable = PageRequest.of(page,size);
         return ResponseEntity.ok(
-                ApiResponse.<List<MessageResponse>>builder()
+                ApiResponse.<PageResponse<MessageResponse>>builder()
                         .status(HttpStatus.OK.value())
                         .message("get messages successful")
-                        .data(messageService.getMessages(authentication.getName(), conversationId))
+                        .data(messageService.getMessages(authentication.getName(), conversationId, pageable))
                         .build()
         );
     }
