@@ -58,11 +58,22 @@ public class GroupChatServiceImpl implements GroupChatService {
         checkCanManageGroup(conversation,currentMember);
 
         for(Long userId : request.getMemberIds()){
-              boolean alreadyMember = conversationMemberRepository
-                      .findByConversationIdAndUserIdAndLeftAtIsNull(conversationId,userId)
-                      .isPresent();
+              if(userId.equals(currentMember.getUser().getId())){
+                  continue;
+              }
 
-              if(alreadyMember){
+              ConversationMember existingMember = conversationMemberRepository
+                      .findByConversationIdAndUserId(conversationId,userId)
+                      .orElse(null);
+
+              if(existingMember != null){
+                  if(existingMember.getLeftAt() == null){
+                      continue;
+                  }
+                  existingMember.setLeftAt(null);
+                  existingMember.setRole(RoleConversation.MEMBER);
+                  existingMember.setLastReadMessage(null);
+                  conversationMemberRepository.save(existingMember);
                   continue;
               }
 

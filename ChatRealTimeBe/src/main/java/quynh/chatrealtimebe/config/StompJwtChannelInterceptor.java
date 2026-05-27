@@ -11,12 +11,14 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
+import quynh.chatrealtimebe.repository.ConversationMemberRepository;
 
 @Component
 @RequiredArgsConstructor
 public class StompJwtChannelInterceptor implements ChannelInterceptor {
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
+    private final ConversationMemberRepository conversationMemberRepository;
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel){
@@ -47,6 +49,20 @@ public class StompJwtChannelInterceptor implements ChannelInterceptor {
                             userDetails.getAuthorities()
                     );
             accessor.setUser(authentication);
+        }
+
+        if(accessor != null && StompCommand.SUBSCRIBE.equals(accessor.getCommand())){
+            String destination = accessor.getDestination();
+            if(destination != null && destination.startsWith("/topic/conversations")){
+                Long conversationId = Long.valueOf(destination.replace("/topic/conversations/",""));
+                String email = accessor.getUser().getName();
+
+                boolean isMember = conversationMemberRepository
+                        .existsByConversationIdAndUserEmailAndLeftAtIsNull(conversationId,email);
+                if(!isMember){
+                    throw new RuntimeException("You are not allowed to subscribe this conversation");
+                }
+            }
         }
         return message;
     }

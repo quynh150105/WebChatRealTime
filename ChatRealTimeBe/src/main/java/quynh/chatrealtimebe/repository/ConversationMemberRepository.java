@@ -10,8 +10,8 @@ import java.util.Optional;
 @Repository
 public interface ConversationMemberRepository extends JpaRepository<ConversationMember,Long> {
     boolean existsByConversationIdAndUserEmailAndLeftAtIsNull(Long conversationId, String email);
-    List<ConversationMember> findByUserEmailAndLeftAtIsNull(String email);
     List<ConversationMember> findByUserEmailAndLeftAtIsNullOrderByConversationUpdatedAtDesc(String email);
     Optional<ConversationMember> findByConversationIdAndUserEmailAndLeftAtIsNull(Long conversationId, String email);
     Optional<ConversationMember> findByConversationIdAndUserIdAndLeftAtIsNull(Long conversationId, Long userId);
+    Optional<ConversationMember> findByConversationIdAndUserId(Long conversationId, Long userId);
 }
