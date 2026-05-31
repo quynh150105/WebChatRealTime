@@ -7,6 +7,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import quynh.chatrealtimebe.domain.dto.ApiResponse;
@@ -23,6 +24,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class MessageController {
     private final MessageService messageService;
+    private final SimpMessagingTemplate simpMessagingTemplate;
 
     @PostMapping("/sendMessage")
     public ResponseEntity<ApiResponse<?>> sendMessage(Authentication authentication,
@@ -70,11 +72,19 @@ public class MessageController {
     @DeleteMapping("/{messageId}")
     public ResponseEntity<ApiResponse<?>> deleteMessage(Authentication authentication,
                                                      @PathVariable("messageId") Long messageId){
+
+        MessageResponse deletedMessage =
+                messageService.deleteMessage(authentication.getName(), messageId);
+        simpMessagingTemplate.convertAndSend(
+                "/topic/conversations/" + deletedMessage.getConversationId(),
+                deletedMessage
+        );
+
         return ResponseEntity.ok(
                 ApiResponse.<MessageResponse>builder()
                         .status(HttpStatus.OK.value())
                         .message("delete messages successful")
-                        .data(messageService.deleteMessage(authentication.getName(), messageId))
+                        .data(deletedMessage)
                         .build()
         );
     }

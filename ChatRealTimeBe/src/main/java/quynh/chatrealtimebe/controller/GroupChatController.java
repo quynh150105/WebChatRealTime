@@ -3,9 +3,11 @@ package quynh.chatrealtimebe.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import quynh.chatrealtimebe.domain.dto.ApiResponse;
 import quynh.chatrealtimebe.domain.dto.request.AddMemberRequest;
 import quynh.chatrealtimebe.domain.dto.request.UpdateConversationRequest;
@@ -51,17 +53,18 @@ public class GroupChatController {
 
 
 
-    @PutMapping("/edit/{id}")
+    @PutMapping(value = "/edit/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<?>> updateGroup(Authentication authentication,
                                                       @PathVariable("id") Long id,
-                                                      @RequestBody UpdateConversationRequest updateConversationRequest
-    ){
+                                                      @ModelAttribute UpdateConversationRequest updateConversationRequest,
+                                                      @RequestPart(value="avatar", required = false) MultipartFile avatar
+                                                      ){
         String email = authentication.getName();
         return ResponseEntity.ok(
           ApiResponse.<ConversationResponse>builder()
                   .status(HttpStatus.OK.value())
                   .message("update group successful")
-                  .data(groupChatService.updateGroup(email,id,updateConversationRequest))
+                  .data(groupChatService.updateGroup(email,id,updateConversationRequest, avatar))
                   .build()
         );
     }

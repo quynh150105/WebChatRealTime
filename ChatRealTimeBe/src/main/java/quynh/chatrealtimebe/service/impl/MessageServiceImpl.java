@@ -153,7 +153,6 @@ public class MessageServiceImpl implements MessageService {
         }
 
         messages.setDeleted(true);
-        messages.setContent(null);
 
         messageRepository.save(messages);
 

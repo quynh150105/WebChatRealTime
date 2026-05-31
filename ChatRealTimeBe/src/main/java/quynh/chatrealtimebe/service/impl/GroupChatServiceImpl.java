@@ -3,6 +3,7 @@ package quynh.chatrealtimebe.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import quynh.chatrealtimebe.constant.RoleConversation;
 import quynh.chatrealtimebe.constant.TypeConversation;
 import quynh.chatrealtimebe.domain.dto.request.AddMemberRequest;
@@ -16,6 +17,7 @@ import quynh.chatrealtimebe.repository.ConversationMemberRepository;
 import quynh.chatrealtimebe.repository.ConversationRepository;
 import quynh.chatrealtimebe.repository.UserRepository;
 import quynh.chatrealtimebe.service.GroupChatService;
+import quynh.chatrealtimebe.utils.CloudinaryService;
 
 import java.time.LocalDateTime;
 
@@ -25,11 +27,12 @@ public class GroupChatServiceImpl implements GroupChatService {
    private final ConversationRepository conversationRepository;
    private final ConversationMapper conversationMapper;
    private final UserRepository userRepository;
-    private final ConversationMemberRepository conversationMemberRepository;
+   private final ConversationMemberRepository conversationMemberRepository;
+   private final CloudinaryService cloudinaryService;
 
     @Override
     @Transactional
-    public ConversationResponse updateGroup(String email, Long conversationId, UpdateConversationRequest request) {
+    public ConversationResponse updateGroup(String email, Long conversationId, UpdateConversationRequest request, MultipartFile file) {
         Conversation conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(()-> new RuntimeException("Conversation not found"));
 
@@ -39,8 +42,9 @@ public class GroupChatServiceImpl implements GroupChatService {
         if(request.getName() != null){
             conversation.setName(request.getName());
         }
-        if(request.getAvatarUrl() != null){
-            conversation.setAvatarUrl(request.getAvatarUrl());
+        if(file != null && !file.isEmpty()){
+            String avatarUrl = cloudinaryService.uploadImage(file);
+            conversation.setAvatarUrl(avatarUrl);
         }
 
         conversationRepository.save(conversation);
