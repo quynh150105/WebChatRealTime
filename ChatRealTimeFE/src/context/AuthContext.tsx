@@ -15,11 +15,12 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem(TOKEN_KEY));
+  const [token, setToken] = useState<string | null>(() => sessionStorage.getItem(TOKEN_KEY));
   const [user, setUser] = useState<UserResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
   const logout = useCallback(() => {
+    sessionStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(TOKEN_KEY);
     setToken(null);
     setUser(null);
@@ -55,7 +56,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(
     async (payload: LoginPayload) => {
       const response = await loginApi(payload);
-      localStorage.setItem(TOKEN_KEY, response.token);
+      sessionStorage.setItem(TOKEN_KEY, response.token);
+      localStorage.removeItem(TOKEN_KEY);
       setToken(response.token);
       await refreshUser();
     },

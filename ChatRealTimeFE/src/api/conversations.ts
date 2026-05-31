@@ -32,8 +32,14 @@ export function leaveGroup(conversationId: number) {
   return apiClient.post(`/group/${conversationId}/leave`).then(unwrap<ConversationResponse>);
 }
 
-export function updateGroup(conversationId: number, payload: { name: string; avatarUrl?: string }) {
-  return apiClient.put(`/group/edit/${conversationId}`, payload).then(unwrap<ConversationResponse>);
+export function updateGroup(conversationId: number, payload: { name: string; avatar?: File }) {
+  const formData = new FormData();
+  formData.append('name', payload.name);
+  if (payload.avatar) {
+    formData.append('avatar', payload.avatar);
+  }
+
+  return apiClient.put(`/group/edit/${conversationId}`, formData).then(unwrap<ConversationResponse>);
 }
 
 export function removeGroupMember(conversationId: number, userId: number) {

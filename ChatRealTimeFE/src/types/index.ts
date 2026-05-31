@@ -32,7 +32,8 @@ export interface MessageResponse {
   id: number;
   content: string | null;
   typeMessage: TypeMessage;
-  deleted: boolean;
+  deleted?: boolean;
+  isDeleted?: boolean;
   createdAt: string;
   updatedAt: string;
   senderId: number;
@@ -71,7 +72,7 @@ export interface RegisterPayload {
 export interface UpdateMePayload {
   username: string;
   fullName: string;
-  avatarUrl?: string;
+  avatar?: File;
 }
 
 export interface SendMessagePayload {

@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, AtSign, BadgeCheck, Clock3, Loader2, LogOut, Pencil, Save, Shield, UserRound, X } from 'lucide-react';
+import { ArrowLeft, AtSign, BadgeCheck, Clock3, ImagePlus, Loader2, LogOut, Pencil, Save, Shield, UserRound, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { updateMe } from '../api/users';
 import Avatar from '../components/Avatar';
@@ -9,7 +9,7 @@ import { useAuth } from '../context/AuthContext';
 const emptyForm = {
   username: '',
   fullName: '',
-  avatarUrl: '',
+  avatar: undefined as File | undefined,
 };
 
 function formatLastSeen(value?: string | null) {
@@ -34,15 +34,22 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
     setForm({
       username: user.username || '',
       fullName: user.fullName || '',
-      avatarUrl: user.avatarUrl || '',
+      avatar: undefined,
     });
   }, [user]);
+
+  useEffect(() => {
+    return () => {
+      if (avatarPreview) URL.revokeObjectURL(avatarPreview);
+    };
+  }, [avatarPreview]);
 
   const presenceText = useMemo(() => {
     if (user?.status) return user.status;
@@ -56,8 +63,18 @@ export default function ProfilePage() {
     setForm({
       username: user?.username || '',
       fullName: user?.fullName || '',
-      avatarUrl: user?.avatarUrl || '',
+      avatar: undefined,
     });
+    if (avatarPreview) {
+      URL.revokeObjectURL(avatarPreview);
+      setAvatarPreview(null);
+    }
+  };
+
+  const changeAvatar = (file?: File) => {
+    if (avatarPreview) URL.revokeObjectURL(avatarPreview);
+    setAvatarPreview(file ? URL.createObjectURL(file) : null);
+    setForm((current) => ({ ...current, avatar: file }));
   };
 
   const submit = async (event: FormEvent) => {
@@ -65,7 +82,7 @@ export default function ProfilePage() {
     const payload = {
       username: form.username.trim(),
       fullName: form.fullName.trim(),
-      avatarUrl: form.avatarUrl.trim() || undefined,
+      avatar: form.avatar,
     };
 
     if (!payload.username) {
@@ -84,6 +101,10 @@ export default function ProfilePage() {
       await updateMe(payload);
       await refreshUser();
       setEditing(false);
+      if (avatarPreview) {
+        URL.revokeObjectURL(avatarPreview);
+        setAvatarPreview(null);
+      }
       setMessage('Cập nhật thông tin cá nhân thành công');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không thể cập nhật thông tin cá nhân');
@@ -188,8 +209,25 @@ export default function ProfilePage() {
                 <input className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100" value={form.fullName} onChange={(event) => setForm((current) => ({ ...current, fullName: event.target.value }))} required />
               </label>
               <label className="grid gap-1.5 text-sm font-medium text-slate-700">
-                Avatar URL
-                <input className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100" value={form.avatarUrl} onChange={(event) => setForm((current) => ({ ...current, avatarUrl: event.target.value }))} />
+                Avatar
+                <div className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 sm:flex-row sm:items-center">
+                  <Avatar src={avatarPreview || user.avatarUrl} name={form.username || user.email} size="xl" />
+                  <div className="min-w-0 flex-1">
+                    <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">
+                      <ImagePlus size={17} />
+                      Chọn ảnh
+                      <input
+                        className="sr-only"
+                        type="file"
+                        accept="image/*"
+                        onChange={(event) => changeAvatar(event.target.files?.[0])}
+                      />
+                    </label>
+                    <div className="mt-2 truncate text-xs font-normal text-slate-500">
+                      {form.avatar ? form.avatar.name : 'Chưa chọn ảnh mới'}
+                    </div>
+                  </div>
+                </div>
               </label>
               <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                 <button type="button" className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" onClick={closeEditor} disabled={saving}>

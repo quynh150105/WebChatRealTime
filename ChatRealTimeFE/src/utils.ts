@@ -17,8 +17,33 @@ export function formatTime(value: string) {
   );
 }
 
+export function isMessageDeleted(message: MessageResponse) {
+  return message.deleted ?? message.isDeleted ?? false;
+}
+
+export function normalizeMessage(message: MessageResponse): MessageResponse {
+  const deleted = isMessageDeleted(message);
+  return {
+    ...message,
+    content: deleted ? null : message.content,
+    deleted,
+  };
+}
+
+export function markMessageDeleted(message: MessageResponse): MessageResponse {
+  return normalizeMessage({
+    ...message,
+    content: null,
+    deleted: true,
+    isDeleted: true,
+  });
+}
+
 export function mergeMessages(existing: MessageResponse[], incoming: MessageResponse[]) {
   const map = new Map<number, MessageResponse>();
-  [...existing, ...incoming].forEach((message) => map.set(message.id, message));
+  [...existing, ...incoming].forEach((message) => {
+    const normalized = normalizeMessage(message);
+    map.set(normalized.id, normalized);
+  });
   return [...map.values()].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 }

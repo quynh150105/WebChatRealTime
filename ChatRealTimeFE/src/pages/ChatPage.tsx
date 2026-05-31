@@ -12,7 +12,7 @@ import EditGroupModal from '../components/EditGroupModal';
 import { useAuth } from '../context/AuthContext';
 import type { ConversationResponse, MessageResponse, UserResponse } from '../types';
 import { ChatSocket } from '../ws/chatSocket';
-import { mergeMessages } from '../utils';
+import { isMessageDeleted, markMessageDeleted, mergeMessages, normalizeMessage } from '../utils';
 import { searchUsers } from '../api/users';
 
 export default function ChatPage() {
@@ -56,6 +56,7 @@ export default function ChatPage() {
       if (active) {
         socketRef.current?.subscribe(active.id, (message) => {
           setMessages((current) => mergeMessages(current, [message]));
+          setReplyTo((current) => (current?.id === message.id && isMessageDeleted(message) ? normalizeMessage(message) : current));
           setConversations((current) => {
             const found = current.find((conversation) => conversation.id === message.conversationId);
             return found ? [found, ...current.filter((conversation) => conversation.id !== found.id)] : current;
@@ -69,6 +70,7 @@ export default function ChatPage() {
   const subscribeActive = useCallback((conversationId: number) => {
     socketRef.current?.subscribe(conversationId, (message) => {
       setMessages((current) => mergeMessages(current, [message]));
+      setReplyTo((current) => (current?.id === message.id && isMessageDeleted(message) ? normalizeMessage(message) : current));
       setConversations((current) => {
         const found = current.find((conversation) => conversation.id === message.conversationId);
         return found ? [found, ...current.filter((conversation) => conversation.id !== found.id)] : current;
@@ -199,11 +201,13 @@ export default function ChatPage() {
             onBack={() => setMobileChatOpen(false)}
             onEdit={async (message, content) => {
               const updated = await updateMessage(message.id, content);
-              setMessages((current) => mergeMessages(current.filter((item) => item.id !== updated.id), [updated]));
+              setMessages((current) => mergeMessages(current, [updated]));
             }}
             onDelete={async (message) => {
               const deleted = await deleteMessage(message.id);
-              setMessages((current) => mergeMessages(current.filter((item) => item.id !== deleted.id), [deleted]));
+              const deletedMessage = markMessageDeleted({ ...message, ...deleted });
+              setMessages((current) => mergeMessages(current, [deletedMessage]));
+              setReplyTo((current) => (current?.id === deletedMessage.id ? deletedMessage : current));
             }}
           />
         </div>
